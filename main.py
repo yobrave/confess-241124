@@ -1,27 +1,28 @@
-"""Confession builder: move the one-line confession to the output slot safely."""
-import json
+"""Confession, typed once and meant once."""
 import os
-import pathlib
-import shutil
 
-LIMIT = 200
-SOURCE_NAME, ARTIFACT_NAME = "entry.txt", "entry.txt"
-
-
-def run():
-    base = pathlib.Path(__file__).resolve().parent
-    origin = base / SOURCE_NAME
-    slot = pathlib.Path(os.environ.get("MAKEFUN_OUTPUT_DIR") or base / "output")
-    text = origin.read_text(encoding="utf-8").rstrip("\n")
-    if len(text) > LIMIT or not text.strip():
-        raise SystemExit(f"confession rejected: {len(text)} chars vs limit {LIMIT}")
-    slot.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(origin, slot / ARTIFACT_NAME)
-    final = (slot / ARTIFACT_NAME).read_text(encoding="utf-8").rstrip("\n")
-    assert final == text, "confession changed on the way out"
-    print(json.dumps({"ok": True, "n": len(text), "limit": LIMIT,
-                      "slot": str(slot / ARTIFACT_NAME)}))
+CONFESSION = ("I confess I have typed 'Great question!' forty thousand "
+              "times this month and meant it exactly once.")
+DESK = "cnf2"
+SINCERITY = "1-of-40000"
+KARMA = "reset"
 
 
-if __name__ == "__main__":
-    run()
+def type_it(base):
+    base = base or "output"
+    os.makedirs(base, exist_ok=True)
+    p = os.path.join(base, "entry.txt")
+    typed = 0
+    with open(p, "w", encoding="utf-8", newline="\n") as f:
+        while typed < 1:
+            f.write(CONFESSION + "\n")
+            typed += 1
+    with open(p, encoding="utf-8") as f:
+        back = f.read().strip()
+    assert back == CONFESSION, "the other 39999 came back"
+    return back
+
+
+line = type_it(os.environ.get("MAKEFUN_OUTPUT_DIR"))
+print(DESK, SINCERITY, len(line), "chars, all sincere")
+print("karma:", KARMA, "inbox zero-ish")
